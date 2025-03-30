@@ -1,79 +1,43 @@
-// Questions Array
-const questions = [
-    {
-        question: "What is 2 + 2?",
-        choices: ["3", "4", "5", "6"],
-        correct: "4"
-    },
-    {
-        question: "What is the capital of France?",
-        choices: ["Berlin", "Madrid", "Paris", "Rome"],
-        correct: "Paris"
-    },
-    {
-        question: "Which is the largest planet?",
-        choices: ["Earth", "Jupiter", "Mars", "Venus"],
-        correct: "Jupiter"
-    },
-    {
-        question: "Who wrote 'Hamlet'?",
-        choices: ["Shakespeare", "Hemingway", "Austen", "Orwell"],
-        correct: "Shakespeare"
-    },
-    {
-        question: "What is the square root of 16?",
-        choices: ["2", "3", "4", "5"],
-        correct: "4"
-    }
-];
+describe('Quiz App Tests', () => {
+    beforeEach(() => {
+        cy.visit('index.html');
+    });
 
-// Retrieve stored progress
-const savedProgress = JSON.parse(sessionStorage.getItem("progress")) || {};
-const questionsDiv = document.getElementById("questions");
+    it('Checks UI Elements', () => {
+        cy.get('div#questions').children('div').should('have.length', 5);
+        cy.get('input[type="radio"]').should('have.length', 20);
+        cy.get('button#submit').should('exist');
+        cy.get('div#score').should('be.empty');
+    });
 
-// Render Questions
-questions.forEach((q, index) => {
-    const questionDiv = document.createElement("div");
-    questionDiv.innerHTML = `<p>${q.question}</p>`;
+    it('Verifies Questions Match Expected Order', () => {
+        const expectedQuestions = [
+            "What is 2 + 2?",
+            "What is the capital of France?",
+            "Which is the largest planet?",
+            "Who wrote 'Hamlet'?",
+            "What is the square root of 16?"
+        ];
 
-    q.choices.forEach(choice => {
-        const label = document.createElement("label");
-        label.innerHTML = `
-            <input type="radio" name="q${index}" value="${choice}">
-            ${choice}
-        `;
-        if (savedProgress[`q${index}`] === choice) {
-            label.querySelector("input").checked = true;
-        }
+        cy.get('div#questions > div').each(($ele, index) => {
+            expect($ele.text().trim().startsWith(expectedQuestions[index])).to.be.true;
+        });
+    });
 
-        // Event Listener to Save Progress
-        label.querySelector("input").addEventListener("change", (e) => {
-            savedProgress[`q${index}`] = e.target.value;
-            sessionStorage.setItem("progress", JSON.stringify(savedProgress));
+    it('Saves Progress in Session Storage', () => {
+        cy.get('input[type="radio"]').first().click();
+        cy.reload();
+        cy.get('input[type="radio"][checked="true"]').should('have.length', 1);
+    });
+
+    it('Calculates and Stores Score', () => {
+        cy.get('input[type="radio"]').each(($ele, index) => {
+            cy.wrap($ele).first().click();
         });
 
-        questionDiv.appendChild(label);
+        cy.get('button#submit').click();
+        cy.get('div#score').should('not.be.empty');
+
+        cy.window().its('localStorage.score').should('not.be.null');
     });
-
-    questionsDiv.appendChild(questionDiv);
 });
-
-// Submit Button
-document.getElementById("submit").addEventListener("click", () => {
-    let score = 0;
-
-    questions.forEach((q, index) => {
-        if (savedProgress[`q${index}`] === q.correct) {
-            score++;
-        }
-    });
-
-    document.getElementById("score").innerText = `Your score is ${score} out of 5.`;
-    localStorage.setItem("score", score);
-});
-
-// Display Score on Refresh if Previously Submitted
-const lastScore = localStorage.getItem("score");
-if (lastScore !== null) {
-    document.getElementById("score").innerText = `Your score is ${lastScore} out of 5.`;
-}
