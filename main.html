@@ -4,93 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz with Session Storage</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .question { margin-bottom: 15px; }
-    </style>
 </head>
 <body>
-    <h2>Quiz</h2>
+    <h1>Quiz</h1>
     <div id="questions"></div>
     <button id="submit">Submit</button>
     <div id="score"></div>
 
-    <script>
-        const quizData = [
-            { question: "What is 2 + 2?", options: ["3", "4", "5", "6"], answer: "1" },
-            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: "2" },
-            { question: "Which planet is known as the Red Planet?", options: ["Earth", "Mars", "Jupiter", "Venus"], answer: "1" },
-            { question: "Who wrote 'Hamlet'?", options: ["Dickens", "Shakespeare", "Austen", "Hemingway"], answer: "1" },
-            { question: "What is the largest ocean?", options: ["Atlantic", "Indian", "Pacific", "Arctic"], answer: "2" }
-        ];
-
-        const questionsContainer = document.getElementById("questions");
-        const submitButton = document.getElementById("submit");
-        const scoreDisplay = document.getElementById("score");
-
-        function loadQuiz() {
-            quizData.forEach((q, index) => {
-                const questionDiv = document.createElement("div");
-                questionDiv.classList.add("question");
-                questionDiv.innerHTML = `<p>${q.question}</p>`;
-                q.options.forEach((option, optIndex) => {
-                    const input = document.createElement("input");
-                    input.type = "radio";
-                    input.name = `question${index}`;
-                    input.value = optIndex;
-                    input.addEventListener("change", saveProgress);
-
-                    const label = document.createElement("label");
-                    label.textContent = option;
-                    label.appendChild(input);
-
-                    questionDiv.appendChild(label);
-                    questionDiv.appendChild(document.createElement("br"));
-                });
-                questionsContainer.appendChild(questionDiv);
-            });
-            restoreProgress();
-        }
-
-        function saveProgress() {
-            let progress = {};
-            quizData.forEach((_, index) => {
-                const selected = document.querySelector(`input[name='question${index}']:checked`);
-                if (selected) progress[index] = selected.value;
-            });
-            sessionStorage.setItem("progress", JSON.stringify(progress));
-        }
-
-        function restoreProgress() {
-            const savedProgress = JSON.parse(sessionStorage.getItem("progress"));
-            if (savedProgress) {
-                Object.keys(savedProgress).forEach(index => {
-                    const option = document.querySelector(`input[name='question${index}'][value='${savedProgress[index]}']`);
-                    if (option) option.checked = true;
-                });
-            }
-        }
-
-        function calculateScore() {
-            let score = 0;
-            quizData.forEach((q, index) => {
-                const selected = document.querySelector(`input[name='question${index}']:checked`);
-                if (selected && selected.value === q.answer) {
-                    score++;
-                }
-            });
-            localStorage.setItem("score", score);
-            scoreDisplay.textContent = `Your score is ${score} out of 5.`;
-        }
-
-        submitButton.addEventListener("click", calculateScore);
-        window.onload = () => {
-            loadQuiz();
-            const savedScore = localStorage.getItem("score");
-            if (savedScore !== null) {
-                scoreDisplay.textContent = `Your score is ${savedScore} out of 5.`;
-            }
-        };
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
