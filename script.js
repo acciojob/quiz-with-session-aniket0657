@@ -1,43 +1,75 @@
-describe('Quiz App Tests', () => {
-    beforeEach(() => {
-        cy.visit('index.html');
-    });
+const questions = [
+    { question: "What is 2 + 2?", options: ["3", "4", "5", "6"], answer: "4" },
+    { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: "Paris" },
+    { question: "Which is the largest planet?", options: ["Earth", "Jupiter", "Mars", "Saturn"], answer: "Jupiter" },
+    { question: "Who wrote 'Hamlet'?", options: ["Shakespeare", "Dickens", "Tolkien", "Austen"], answer: "Shakespeare" },
+    { question: "What is the square root of 16?", options: ["2", "4", "8", "16"], answer: "4" }
+];
 
-    it('Checks UI Elements', () => {
-        cy.get('div#questions').children('div').should('have.length', 5);
-        cy.get('input[type="radio"]').should('have.length', 20);
-        cy.get('button#submit').should('exist');
-        cy.get('div#score').should('be.empty');
-    });
-
-    it('Verifies Questions Match Expected Order', () => {
-        const expectedQuestions = [
-            "What is 2 + 2?",
-            "What is the capital of France?",
-            "Which is the largest planet?",
-            "Who wrote 'Hamlet'?",
-            "What is the square root of 16?"
-        ];
-
-        cy.get('div#questions > div').each(($ele, index) => {
-            expect($ele.text().trim().startsWith(expectedQuestions[index])).to.be.true;
+// Function to render questions
+function renderQuestions() {
+    const questionsContainer = document.getElementById('questions');
+    questions.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.innerHTML = `<p>${q.question}</p>`;
+        q.options.forEach(option => {
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = `question${index}`;
+            input.value = option;
+            questionDiv.appendChild(input);
+            questionDiv.innerHTML += option + '<br>';
         });
+        questionsContainer.appendChild(questionDiv);
     });
+}
 
-    it('Saves Progress in Session Storage', () => {
-        cy.get('input[type="radio"]').first().click();
-        cy.reload();
-        cy.get('input[type="radio"][checked="true"]').should('have.length', 1);
+// Save progress to session storage
+function saveProgress() {
+    const progress = {};
+    questions.forEach((q, index) => {
+        const selectedOption = document.querySelector(`input[name='question${index}']:checked`);
+        if (selectedOption) {
+            progress[`question${index}`] = selectedOption.value;
+        }
     });
+    sessionStorage.setItem('progress', JSON.stringify(progress));
+}
 
-    it('Calculates and Stores Score', () => {
-        cy.get('input[type="radio"]').each(($ele, index) => {
-            cy.wrap($ele).first().click();
-        });
+// Load progress from session storage
+function loadProgress() {
+    const progress = JSON.parse(sessionStorage.getItem('progress'));
+    if (progress) {
+        for (const key in progress) {
+            const input = document.querySelector(`input[name='${key}'][value='${progress[key]}']`);
+            if (input) {
+                input.checked = true;
+            }
+        }
+    }
+}
 
-        cy.get('button#submit').click();
-        cy.get('div#score').should('not.be.empty');
-
-        cy.window().its('localStorage.score').should('not.be.null');
+// Calculate score and store in local storage
+function calculateScore() {
+    let score = 0;
+    questions.forEach((q, index) => {
+        const selectedOption = document.querySelector(`input[name='question${index}']:checked`);
+        if (selectedOption && selectedOption.value === q.answer) {
+            score++;
+        }
     });
+    document.getElementById('score').innerText = `Your score is ${score} out of ${questions.length}.`;
+    localStorage.setItem('score', score);
+}
+
+// Event listeners
+document.getElementById('submit').addEventListener('click', () => {
+    saveProgress();
+    calculateScore();
 });
+
+// Load progress on page load
+window.onload = () => {
+    renderQuestions();
+    loadProgress();
+};
